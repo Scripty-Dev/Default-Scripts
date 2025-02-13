@@ -1,0 +1,293 @@
+import subprocess
+import os
+import sys
+import json
+import tkinter as tk
+from tkinter import filedialog
+
+def run_command(command, cwd=None):
+    try:
+        process = subprocess.Popen(
+            command, 
+            cwd=cwd, 
+            shell=True, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        stdout, stderr = process.communicate()
+        
+        if process.returncode != 0:
+            print(f"Command failed: {stderr}")
+            return False
+        return True
+    except Exception as e:
+        print(f"Error executing command: {str(e)}")
+        return False
+
+def setup_vue(folder_name="vue-ts-app"):
+    try:
+        # Create and configure root window with HiDPI support
+        try:
+            from ctypes import windll
+            windll.shcore.SetProcessDpiAwareness(2)
+        except:
+            pass
+
+        root = tk.Tk()
+        try:
+            root.tk.call('tk', 'scaling', root.winfo_fpixels('1i')/72.0)
+        except:
+            pass
+            
+        root.withdraw()
+        
+        path = filedialog.askdirectory(
+            title="Select Directory for Vue Project"
+        )
+        
+        if not path:
+            return False
+            
+        full_path = os.path.join(path, folder_name)
+        
+        print(f"Creating Vue 3 + TypeScript project in: {full_path}")
+        
+        # Create Vue project with Vite and install initial dependencies
+        commands = [
+            f"npm create vite@latest {folder_name} -- --template vue-ts --force",
+            "npm install",
+            "npm install vue-router@4 pinia @vueuse/core",
+            "npm install -D tailwindcss@3.3.0 postcss@8.4.31 autoprefixer@10.4.14",
+            "npx tailwindcss init -p" 
+        ]
+        
+        for cmd in commands:
+            print(f"\nExecuting: {cmd}")
+            if not run_command(cmd, cwd=path if cmd == commands[0] else full_path):
+                return False
+
+        # Update configuration files and content
+        files_to_create = {
+            'tailwind.config.js': """/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{vue,js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}""",
+            'postcss.config.js': """export default {
+  plugins: {
+    'tailwindcss': {},
+    autoprefixer: {},
+  },
+}""",
+            'src/App.vue': """<script setup lang="ts">
+import { RouterLink, RouterView } from 'vue-router'
+</script>
+
+<template>
+  <div class="min-h-screen bg-gray-50">
+    <header class="bg-white shadow">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <div class="flex-shrink-0 flex items-center">
+              <span class="text-2xl font-bold text-emerald-600">Vue 3</span>
+            </div>
+            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <RouterLink to="/" class="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-emerald-500 text-sm font-medium">
+                Home
+              </RouterLink>
+              <RouterLink to="/about" class="text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">
+                About
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+          <RouterView />
+        </div>
+      </div>
+    </main>
+  </div>
+</template>""",
+            'src/views/HomeView.vue': """<script setup lang="ts">
+import { ref } from 'vue'
+
+const count = ref(0)
+</script>
+
+<template>
+  <div class="text-center">
+    <h1 class="text-4xl font-bold mb-8">
+      Vue 3 + TypeScript project initialized by
+      <span class="text-emerald-600">Scripty</span>
+    </h1>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 max-w-2xl mx-auto">
+      <p class="text-gray-600 mb-4">
+        Edit <code class="bg-gray-100 px-2 py-1 rounded">src/views/HomeView.vue</code> to test HMR
+      </p>
+
+      <div class="flex justify-center gap-4 items-center">
+        <button
+          type="button"
+          class="px-4 py-2 font-semibold text-sm bg-emerald-500 text-white rounded-md shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+          @click="count++"
+        >
+          Count is: {{ count }}
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+      <a
+        href="https://vuejs.org/guide/introduction.html"
+        target="_blank"
+        class="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+      >
+        <h2 class="mb-3 text-2xl font-semibold">
+          Documentation
+          <span class="inline-block transition-transform group-hover:translate-x-1">-></span>
+        </h2>
+        <p class="text-sm opacity-70">Find in-depth information about Vue 3 features and API.</p>
+      </a>
+
+      <a
+        href="https://pinia.vuejs.org/"
+        target="_blank"
+        class="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+      >
+        <h2 class="mb-3 text-2xl font-semibold">
+          Pinia
+          <span class="inline-block transition-transform group-hover:translate-x-1">-></span>
+        </h2>
+        <p class="text-sm opacity-70">Learn about Vue's official state management library.</p>
+      </a>
+    </div>
+  </div>
+</template>""",
+            'src/views/AboutView.vue': """<template>
+  <div class="text-center">
+    <h1 class="text-4xl font-bold mb-8">About</h1>
+    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+      This is a Vue 3 project with TypeScript, created using Vite. It includes Vue Router for navigation,
+      Pinia for state management, and Tailwind CSS for styling.
+    </p>
+    <p class="text-2xl font-bold mt-8">Initialized by <span class="text-purple-600">Scripty</span></p>
+  </div>
+</template>""",
+            'src/router/index.ts': """import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import AboutView from '../views/AboutView.vue'
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: AboutView
+    }
+  ]
+})
+
+export default router""",
+            'src/stores/main.ts': """import { defineStore } from 'pinia'
+
+export const useMainStore = defineStore('main', {
+  state: () => ({
+    count: 0,
+    name: 'Vue 3 + TypeScript'
+  }),
+  getters: {
+    doubleCount: (state) => state.count * 2,
+  },
+  actions: {
+    increment() {
+      this.count++
+    }
+  }
+})""",
+            'src/main.ts': """import './style.css'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+import router from './router'
+
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+
+app.mount('#app')""",
+            'src/style.css': """@tailwind base;
+@tailwind components;
+@tailwind utilities;"""
+        }
+
+        # Create directories if they don't exist
+        for file_path in files_to_create:
+            dir_path = os.path.dirname(os.path.join(full_path, file_path))
+            os.makedirs(dir_path, exist_ok=True)
+            
+            # Write file content
+            with open(os.path.join(full_path, file_path), 'w') as f:
+                f.write(files_to_create[file_path])
+
+        return True
+    except Exception as e:
+        print(f"Error setting up Vue project: {e}")
+        return False
+
+async def func(args):
+    """Handler function for Vue.js project setup"""
+    try:
+        folder_name = args.get("folder_name", "vue_project")
+        
+        if setup_vue(folder_name):
+            return json.dumps({
+                "success": True,
+                "message": f"Vue.js project created successfully in {folder_name}"
+            })
+        else:
+            return json.dumps({
+                "success": False,
+                "error": "Project setup failed"
+            })
+            
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": str(e)
+        })
+
+object = {
+    "name": "vue_setup",
+    "description": "Create a new Vue 3 project with TypeScript and TailwindCSS",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "folder_name": {
+                "type": "string",
+                "description": "Name of the project folder",
+                "default": "vue_project"
+            }
+        }
+    }
+}
