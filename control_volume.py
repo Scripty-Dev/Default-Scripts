@@ -82,3 +82,5 @@ object = {
         ]
     }
 }
+
+public_description = "Control system volume automatically."

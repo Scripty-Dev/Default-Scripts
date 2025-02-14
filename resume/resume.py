@@ -1,12 +1,19 @@
 from ..typings.scripty import script_dir
+from bs4 import BeautifulSoup
 from jinja2 import Template
+import aiohttp
 import json
 import os
 
-async def func(args):
+async def func(args, call_ai):
     try:
         builder = ResumeBuilder(script_dir)
-        result = builder.update_resume_data(args)
+        if 'job_link' in args:
+            job_link = args.pop('job_link')
+            builder.update_resume_data(args)
+            result = await builder.optimize_for_job(args | {'job_link': job_link}, call_ai)
+        else:
+            result = builder.update_resume_data(args)
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -19,9 +26,9 @@ class ResumeBuilder:
         self.style_files = [f for f in os.listdir(self.styles_dir) if f.startswith('style_') and f.endswith('.css')]
         self.current_style = self.style_files[0].replace('style_', '').replace('.css', '')
         
-        with open(os.path.join(self.styles_dir, self.style_files[0]), 'r') as css_file:
+        with open(os.path.join(self.styles_dir, self.style_files[0]), 'r', encoding='utf-8') as css_file:
             self.css = css_file.read()
-        with open(os.path.join(script_dir, 'resume_template.jinja'), 'r') as template_file:
+        with open(os.path.join(script_dir, 'resume_template.jinja'), 'r', encoding='utf-8') as template_file:
             self.template = template_file.read()
 
     def update_resume_data(self, new_data):
@@ -49,13 +56,13 @@ class ResumeBuilder:
 
     def _load_current_data(self):
         if os.path.exists(self.data_file):
-            with open(self.data_file, 'r') as f:
+            with open(self.data_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return {}
 
     def _save_current_data(self, data):
-        with open(self.data_file, 'w') as f:
-            json.dump(data, f)
+        with open(self.data_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False)
 
     def _get_missing_fields(self, current_data):
         required_fields = ["name", "email", "phone", "location", "linkedin", 
@@ -85,6 +92,91 @@ class ResumeBuilder:
         template = Template(self.template)
         return template.render(**data)
 
+    async def optimize_for_job(self, args, call_ai):
+        if 'job_link' not in args:
+            return {"error": "No job link provided"}
+
+        current_data = self._load_current_data()
+        current_data.update({k: v for k, v in args.items() if k != 'job_link'})
+        self._save_current_data(current_data)
+
+        try:
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(args['job_link']) as response:
+                    html_content = await response.text()
+                    soup = BeautifulSoup(html_content, 'html.parser')
+                    job_content = soup.get_text(separator=' ', strip=True)
+
+            prompt = f"""Given this job posting:
+{job_content}
+            
+And this current resume data:
+{json.dumps(current_data, indent=2)}
+            
+Optimize this resume to better match the job requirements."""
+            
+            tool = {
+                "type": "function",
+                "function": {
+                    "name": "optimize_resume",
+                    "description": "Optimize resume data to match job requirements",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "email": {"type": "string"},
+                            "phone": {"type": "string"},
+                            "location": {"type": "string"},
+                            "linkedin": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "experience": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "company": {"type": "string"},
+                                        "location": {"type": "string"},
+                                        "dates": {"type": "string"},
+                                        "achievements": {"type": "array", "items": {"type": "string"}}
+                                    }
+                                }
+                            },
+                            "education": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "degree": {"type": "string"},
+                                        "school": {"type": "string"},
+                                        "location": {"type": "string"},
+                                        "dates": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "skills": {"type": "array", "items": {"type": "string"}}
+                        }
+                    }
+                }
+            }
+
+            response = call_ai(prompt, tools=[tool], tool_choice="required")
+            if response.get("tool_calls"):
+                optimized_data = json.loads(response["tool_calls"][0]["function"]["arguments"])
+                current_data.update(optimized_data)
+                self._save_current_data(current_data)
+            
+            html = self.generate_resume(current_data)
+            return {
+                "message": "Resume optimized for job posting",
+                "html": html,
+                "second_response": "Here is your optimized resume. Would you like to make any adjustments?"
+            }
+            
+        except Exception as e:
+            return {"error": str(e)}
+
 object = {
     "name": "generate_resume",
     "description": """Generate an HTML resume from provided data.
@@ -100,7 +192,6 @@ Do not put any information that is not provided by the user in the resume.""",
             "linkedin": {"type": "string", "description": "LinkedIn profile URL"},
             "summary": {"type": "string", "description": "Professional summary", "optional": True},
             "website": {"type": "string", "description": "Personal website URL", "optional": True},
-
             "experience": {
                 "type": "array",
                 "items": {
@@ -129,7 +220,14 @@ Do not put any information that is not provided by the user in the resume.""",
             "skills": {
                 "type": "array",
                 "items": {"type": "string"}
+            },
+            "job_link": {
+                "type": "string",
+                "description": "Optional job posting URL to optimize resume for",
+                "optional": True
             }
         }
     }
 }
+
+public_description = "Generate a resume, or optimize a resume for a job application."
