@@ -291,3 +291,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new Vue 3 project with TypeScript and TailwindCSS"

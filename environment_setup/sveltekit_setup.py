@@ -245,3 +245,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new SvelteKit project with TypeScript and TailwindCSS"

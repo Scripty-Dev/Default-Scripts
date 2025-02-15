@@ -202,3 +202,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new Vite + React project with TypeScript and TailwindCSS"

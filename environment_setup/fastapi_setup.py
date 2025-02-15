@@ -342,3 +342,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new FastAPI + React project with TypeScript and TailwindCSS"

@@ -291,3 +291,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new Express.js + TypeScript project with a predefined structure"

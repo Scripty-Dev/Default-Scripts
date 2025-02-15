@@ -330,3 +330,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new MERN Stack project with TypeScript and TailwindCSS"

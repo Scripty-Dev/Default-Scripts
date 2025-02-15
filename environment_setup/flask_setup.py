@@ -374,3 +374,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new Flask + React project with TypeScript and TailwindCSS"

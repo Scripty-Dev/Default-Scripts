@@ -154,3 +154,5 @@ object = {
         }
     }
 }
+
+public_description = "Create a new Next.js project with TypeScript and TailwindCSS"
