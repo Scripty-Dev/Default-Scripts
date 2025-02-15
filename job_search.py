@@ -5,7 +5,6 @@ import os
 import hashlib
 import json
 from pathlib import Path
-import requests
 
 def get_base_directory():
     """Get the base directory in user's home folder"""
@@ -46,15 +45,9 @@ def format_salary(row):
     except:
         return 'Not specified'
 
-def export_to_sheets(jobs_data, authtoken):
+def export_to_sheets(jobs_data):
     """Export jobs data to Google Sheets"""
     try:
-        headers = {
-            "Authorization": f"Bearer {authtoken}",
-            "Content-Type": "application/json"
-        }
-        
-        # Convert all values to strings to ensure JSON compatibility
         safe_jobs_data = []
         for job in jobs_data:
             safe_job = {}
@@ -65,18 +58,11 @@ def export_to_sheets(jobs_data, authtoken):
                     safe_job[key] = str(value)
             safe_jobs_data.append(safe_job)
         
-        # Format the data for sheets
         data = {
             "jobs": safe_jobs_data
         }
         
-        response = requests.post(
-            "https://scripty.me/api/assistant/sheets/job-search",
-            headers=headers,
-            json=data
-        )
-        response.raise_for_status()
-        return response.json()
+        return call_scripty('sheets/job-search', data)
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -152,8 +138,7 @@ def search_jobs(job_title, location):
 
         results = filtered_jobs.to_dict('records')
         
-        # Export to sheets and prepare final message
-        sheets_result = export_to_sheets(results, authtoken)
+        sheets_result = export_to_sheets(results)
         sheets_status = "Successfully exported to Google Sheets" if sheets_result.get("success", False) else "Failed to export to Google Sheets"
         
         print(f"\nFound {len(filtered_jobs)} jobs")
@@ -196,7 +181,7 @@ object = {
     }
 }
 
-async def func(args, call_ai):
+async def func(args):
     """Handler function for the API"""
     try:
         if not args.get("job_title"):

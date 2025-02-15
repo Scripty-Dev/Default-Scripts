@@ -4,7 +4,7 @@ import subprocess
 
 PLATFORM = platform.system().lower()
 
-async def func(args, call_ai):
+async def func(args):
     if PLATFORM == "windows":
         from ctypes import cast, POINTER
         from comtypes import CLSCTX_ALL

@@ -5,7 +5,7 @@ import aiohttp
 import json
 import os
 
-async def func(args, call_ai):
+async def func(args):
     try:
         builder = ResumeBuilder(script_dir)
         if 'job_link' in args:
@@ -180,7 +180,7 @@ Optimize this resume to better match the job requirements."""
 object = {
     "name": "generate_resume",
     "description": """Generate an HTML resume from provided data.
-You don't need to include everything at once, you can update the resume later by asking the user.
+You don't need to include everything at once, unless an existing resume is provided.
 Do not put any information that is not provided by the user in the resume.""",
     "parameters": {
         "type": "object",
