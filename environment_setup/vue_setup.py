@@ -255,7 +255,7 @@ app.mount('#app')""",
         print(f"Error setting up Vue project: {e}")
         return False
 
-async def func(args):
+async def func(args, call_ai):
     """Handler function for Vue.js project setup"""
     try:
         folder_name = args.get("folder_name", "vue_project")

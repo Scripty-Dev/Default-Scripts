@@ -196,7 +196,7 @@ object = {
     }
 }
 
-async def func(args):
+async def func(args, call_ai):
     """Handler function for the API"""
     try:
         if not args.get("job_title"):

@@ -166,7 +166,7 @@ def setup_vite(folder_name="vite-react-app"):
                 pass
         return False
 
-async def func(args):
+async def func(args, call_ai):
     """Handler function for Vite + React project setup"""
     try:
         folder_name = args.get("folder_name", "vite_project")

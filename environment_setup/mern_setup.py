@@ -294,7 +294,7 @@ MERN (MongoDB, Express, React, Node.js) Stack project initialized by Scripty
         print(f"Error setting up MERN project: {e}")
         return False
 
-async def func(args):
+async def func(args, call_ai):
     """Handler function for MERN Stack project setup"""
     try:
         folder_name = args.get("folder_name", "mern_project")
