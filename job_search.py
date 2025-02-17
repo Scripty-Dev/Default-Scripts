@@ -62,7 +62,15 @@ def export_to_sheets(jobs_data):
             "jobs": safe_jobs_data
         }
         
-        return call_scripty('sheets/job-search', data)
+        sheets_response = call_scripty('sheets/job-search', data)
+        if sheets_response.get("success"):
+            spreadsheet_id = sheets_response.get("spreadsheetId")
+            spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
+            return {
+                "success": True,
+                "spreadsheet_url": spreadsheet_url
+            }
+        return sheets_response
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -139,7 +147,10 @@ def search_jobs(job_title, location):
         results = filtered_jobs.to_dict('records')
         
         sheets_result = export_to_sheets(results)
-        sheets_status = "Successfully exported to Google Sheets" if sheets_result.get("success", False) else "Failed to export to Google Sheets"
+        if sheets_result.get("success"):
+            sheets_status = f"Successfully exported to Google Sheets: {sheets_result['spreadsheet_url']}"
+        else:
+            sheets_status = "Failed to export to Google Sheets"
         
         print(f"\nFound {len(filtered_jobs)} jobs")
         print(f"Results saved to: {csv_path}")
@@ -147,7 +158,9 @@ def search_jobs(job_title, location):
         
         result = {
             "success": True,
-            "message": f"Successfully found {len(filtered_jobs)} jobs and exported to Google Sheets"
+            "message": f"Successfully found {len(filtered_jobs)} jobs",
+            "csv_path": csv_path,
+            "sheets_url": sheets_result.get("spreadsheet_url") if sheets_result.get("success") else None
         }
             
         return result
