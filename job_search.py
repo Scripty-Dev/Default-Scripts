@@ -147,10 +147,7 @@ def search_jobs(job_title, location):
         
         result = {
             "success": True,
-            "jobs_found": len(filtered_jobs),
-            "save_location": search_dir,
-            "results": results,
-            "sheets_export": sheets_result
+            "message": f"Successfully found {len(filtered_jobs)} jobs and exported to Google Sheets"
         }
             
         return result
