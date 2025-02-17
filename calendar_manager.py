@@ -102,17 +102,8 @@ def create_calendar_event(summary, start_time, end_time=None, description=None):
         if description:
             data["description"] = description
         
-        headers = {
-            "Authorization": f"Bearer {authtoken}"
-        }
-        
-        response = requests.post(
-            "https://scripty.me/api/assistant/calendar/events",
-            headers=headers,
-            json=data
-        )
-        response.raise_for_status()
-        return response.json()
+        response = call_scripty('calendar/events', data)
+        return response
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -121,15 +112,8 @@ def get_calendar_events():
     Get all calendar events
     """
     try:
-        headers = {
-            "Authorization": f"Bearer {authtoken}"
-        }
-        response = requests.get(
-            "https://scripty.me/api/assistant/calendar/events",
-            headers=headers
-        )
-        response.raise_for_status()
-        return response.json()
+        response = call_scripty('calendar/events')
+        return response
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -165,15 +149,8 @@ def get_free_slots(start_date=None, end_date=None, min_duration=30):
             except ValueError as e:
                 return {"success": False, "error": str(e)}
         
-        headers = {
-            "Authorization": f"Bearer {authtoken}"
-        }
-        response = requests.get(
-            "https://scripty.me/api/assistant/calendar/events",
-            headers=headers
-        )
-        response.raise_for_status()
-        events = response.json().get('items', [])
+        response = call_scripty('calendar/events')
+        events = response.get('items', [])
         
         busy_slots = []
         for event in events:
