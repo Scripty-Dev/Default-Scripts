@@ -103,6 +103,14 @@ def create_calendar_event(summary, start_time, end_time=None, description=None):
             data["description"] = description
         
         response = call_scripty('calendar/events', data)
+        
+        if response.get("success"):
+            event_link = response.get("eventLink", "link unavailable")
+            return {
+                "success": True,
+                "message": f"Successfully set meeting for {summary}, starts at {start_time_dt.strftime('%I:%M %p')}, ends at {end_time_dt.strftime('%I:%M %p')}, view here: {event_link}",
+                "event_link": event_link
+            }
         return response
     except Exception as e:
         return {"success": False, "error": str(e)}
