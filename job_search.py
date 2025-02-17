@@ -159,7 +159,7 @@ def search_jobs(job_title, location):
         sheets_url = sheets_result.get("spreadsheet_url") if sheets_result.get("success") else "export failed"
         result = {
             "success": True,
-            "message": f"Successfully found {len(filtered_jobs)} jobs in {location}, saved to {csv_path}, exported to {sheets_url}",
+            "message": f"Successfully found {len(filtered_jobs)} jobs in {location}, saved to {csv_path}, exported to {sheets_url} (ENSURE TO INFORM THE USER OF THE EXACT CSV PATH AND OUTPUT THE SHEETS_URL FOR EASE OF ACCESS)",
             "csv_path": csv_path,
             "sheets_url": sheets_url
         }
