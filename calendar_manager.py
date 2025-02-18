@@ -103,7 +103,19 @@ def create_calendar_event(summary, start_time, end_time=None, description=None):
             data["description"] = description
         
         response = call_scripty('calendar/events', data)
-        return response
+        
+        if response.get("status") == "confirmed":
+            # Get start and end times from response
+            start = datetime.fromisoformat(response["start"]["dateTime"].replace('Z', '+00:00'))
+            end = datetime.fromisoformat(response["end"]["dateTime"].replace('Z', '+00:00'))
+            event_link = response.get("htmlLink", "link unavailable")
+            
+            return {
+                "success": True,
+                "message": f"Successfully set meeting for {summary}, starts at {start.strftime('%I:%M %p')}, ends at {end.strftime('%I:%M %p')}, view here: {event_link}",
+                "event_link": event_link
+            }
+        return {"success": False, "error": "Failed to create event"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
