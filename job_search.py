@@ -74,13 +74,43 @@ def export_to_sheets(jobs_data):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-def search_jobs(job_title, location):
+def parse_time_expression(time_str):
+    """Parse natural language time expression into hours"""
+    if not time_str:
+        return 72  # Default value
+        
+    time_str = time_str.lower().strip()
+    if time_str.isdigit():
+        return int(time_str)  # Assume hours if just a number
+        
+    parts = time_str.split()
+    try:
+        value = int(parts[0])
+        unit = parts[1].lower().rstrip('s')  # Remove plural 's' if present
+        
+        multipliers = {
+            'hour': 1,
+            'day': 24,
+            'week': 24 * 7,
+            'month': 24 * 30,  # Approximate
+            'year': 24 * 365   # Approximate
+        }
+        
+        if unit in multipliers:
+            return value * multipliers[unit]
+        return 72  # Default if unit not recognized
+    except:
+        return 72  # Default if parsing fails
+
+def search_jobs(job_title, location, results_wanted=100, time_range=None):
     """Main function to search for jobs"""
     try:
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         base_dir = get_base_directory()
         search_dir = os.path.join(base_dir, f"search_{timestamp}")
         os.makedirs(search_dir, exist_ok=True)
+
+        hours_old = parse_time_expression(time_range)
 
         city = location.split(',')[0].strip()
         country = "Canada" if "ON" in location.upper() else "USA"
@@ -95,8 +125,8 @@ def search_jobs(job_title, location):
             location=location,
             google_search_term=google_search_term,
             country_indeed=country,
-            results_wanted=100,
-            hours_old=72,
+            results_wanted=results_wanted,
+            hours_old=hours_old,
             description_format="markdown",
             fetch_full_description=True,
             return_as_df=True,
@@ -139,7 +169,7 @@ def search_jobs(job_title, location):
             'total_jobs': len(filtered_jobs),
             'search_term': search_term,
             'location': location,
-            'date_range': '3 days'
+            'date_range': time_range or '72 hours'
         }
         with open(os.path.join(search_dir, "metadata.json"), 'w') as f:
             json.dump(metadata, f, indent=2)
@@ -157,9 +187,10 @@ def search_jobs(job_title, location):
         print(sheets_status)
         
         sheets_url = sheets_result.get("spreadsheet_url") if sheets_result.get("success") else "export failed"
+        time_range_str = time_range or "72 hours"
         result = {
             "success": True,
-            "message": f"Successfully found {len(filtered_jobs)} jobs in {location}, saved to {csv_path}, exported to {sheets_url} (ENSURE TO INFORM THE USER OF THE EXACT CSV PATH AND OUTPUT THE SHEETS_URL FOR EASE OF ACCESS)",
+            "message": f"Found {len(filtered_jobs)} jobs for '{job_title}' in {location} from the past {time_range_str}.\nResults saved to: {csv_path}\nGoogle Sheets: {sheets_url}",
             "csv_path": csv_path,
             "sheets_url": sheets_url
         }
@@ -186,6 +217,16 @@ object = {
             "location": {
                 "type": "string",
                 "description": "Location to search in (e.g., 'Toronto, ON', 'San Francisco, CA')"
+            },
+            "results_wanted": {
+                "type": "integer",
+                "description": "Number of results to fetch (default: 100)",
+                "default": 100
+            },
+            "time_range": {
+                "type": "string",
+                "description": "Time range for job posts (e.g., '3 days', '2 weeks', '1 month', default: '72 hours')",
+                "default": "72 hours"
             }
         },
         "required": ["job_title", "location"]
@@ -207,7 +248,12 @@ async def func(args):
                 "error": "Location is required"
             })
             
-        result = search_jobs(args["job_title"], args["location"])
+        result = search_jobs(
+            args["job_title"],
+            args["location"],
+            results_wanted=args.get("results_wanted", 100),
+            time_range=args.get("time_range")
+        )
         return json.dumps(result)
         
     except Exception as e:
