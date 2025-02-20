@@ -9,7 +9,7 @@ PLATFORM = platform.system().lower()
 def get_recycle_bin_size():
     return None
 
-async def func(args, call_ai):
+async def func(args):
     try:
         print("\n=== Starting Recycle Bin Cleaner ===")
         
