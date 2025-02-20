@@ -17,7 +17,7 @@ def find_notification_process():
             pass
     return None
 
-async def func(args, call_ai):
+async def func(args):
     try:
         operation = args.get("operation")
         
