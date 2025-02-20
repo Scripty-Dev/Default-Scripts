@@ -256,7 +256,7 @@ Express.js + TypeScript API initialized by Scripty
         print(f"Error setting up Express.js + TypeScript project: {str(e)}")
         return False
 
-async def func(args, call_ai):
+async def func(args):
     """Handler function for Express.js + TypeScript project setup"""
     try:
         folder_name = args.get("folder_name", "express-ts-app")

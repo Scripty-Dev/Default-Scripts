@@ -209,7 +209,7 @@ SvelteKit + TypeScript project initialized by Scripty
         print(f"Error setting up SvelteKit project: {e}")
         return False
 
-async def func(args, call_ai):
+async def func(args):
     """Handler function for SvelteKit project setup"""
     try:
         folder_name = args.get("folder_name", "sveltekit_project")

@@ -306,7 +306,7 @@ FastAPI + React Stack project initialized by Scripty
         print(f"Error setting up FastAPI + React project: {e}")
         return False
 
-async def func(args, call_ai):
+async def func(args):
     """Handler function for FastAPI + React project setup"""
     try:
         folder_name = args.get("folder_name", "fastapi_project")

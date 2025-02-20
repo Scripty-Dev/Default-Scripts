@@ -338,7 +338,7 @@ Flask + TypeScript Stack project initialized by Scripty
                 pass
         return False
 
-async def func(args, call_ai):
+async def func(args):
     """Handler function for Flask + React project setup"""
     try:
         folder_name = args.get("folder_name", "flask_project")

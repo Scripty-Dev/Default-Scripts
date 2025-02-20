@@ -118,7 +118,7 @@ export default function Home() {
         print(f"Error setting up Next.js project: {e}")
         return False
 
-async def func(args, call_ai):
+async def func(args):
     """Handler function for Next.js project setup"""
     try:
         folder_name = args.get("folder_name", "next_project")
