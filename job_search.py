@@ -5,6 +5,7 @@ import os
 import hashlib
 import json
 from pathlib import Path
+from jinja2 import Template
 
 def get_base_directory():
     """Get the base directory in user's home folder"""
@@ -12,6 +13,83 @@ def get_base_directory():
     base = os.path.join(home, "Job Search Results")
     os.makedirs(base, exist_ok=True)
     return base
+
+def generate_jobs_html(jobs_data):
+    """Generate HTML table view of jobs data"""
+    html_template = """
+    <style>
+        .jobs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.9em;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #1f1f1f;
+            color: #e8eaed;
+        }
+        .jobs-table thead tr {
+            border-bottom: 2px solid #5f6368;
+            color: #e8eaed;
+            text-align: left;
+        }
+        .jobs-table th,
+        .jobs-table td {
+            padding: 12px 15px;
+            border: 1px solid #3c4043;
+        }
+        .jobs-table tbody tr {
+            border-bottom: 1px solid #3c4043;
+        }
+        .jobs-table tbody tr:hover {
+            background-color: #292929;
+        }
+        .jobs-table a {
+            color: #8ab4f8;
+            text-decoration: none;
+        }
+        .jobs-table a:hover {
+            text-decoration: underline;
+        }
+        /* Wrapper to ensure dark background extends fully */
+        .table-wrapper {
+            background-color: #1f1f1f;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    </style>
+    <div class="table-wrapper">
+        <table class="jobs-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Company</th>
+                    <th>Location</th>
+                    <th>Date Posted</th>
+                    <th>Salary</th>
+                    <th>Type</th>
+                    <th>Remote</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td><a href="{{ job.job_url }}" target="_blank">{{ job.title }}</a></td>
+                    <td>{{ job.company }}</td>
+                    <td>{{ job.location }}</td>
+                    <td>{{ job.date_posted }}</td>
+                    <td>{{ job.salary }}</td>
+                    <td>{{ job.job_type if job.job_type else 'N/A' }}</td>
+                    <td>{{ 'Yes' if job.is_remote else 'No' }}</td>
+                    <td>{{ job.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    """
+    template = Template(html_template)
+    return template.render(jobs=jobs_data)
 
 def save_description(description, descriptions_dir):
     """Save description to a separate file and return its ID"""
@@ -44,35 +122,6 @@ def format_salary(row):
             return 'Not specified'
     except:
         return 'Not specified'
-
-def export_to_sheets(jobs_data):
-    """Export jobs data to Google Sheets"""
-    try:
-        safe_jobs_data = []
-        for job in jobs_data:
-            safe_job = {}
-            for key, value in job.items():
-                if pd.isna(value):
-                    safe_job[key] = ''
-                else:
-                    safe_job[key] = str(value)
-            safe_jobs_data.append(safe_job)
-        
-        data = {
-            "jobs": safe_jobs_data
-        }
-        
-        sheets_response = call_scripty('sheets/job-search', data)
-        if sheets_response.get("success"):
-            spreadsheet_id = sheets_response.get("spreadsheetId")
-            spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
-            return {
-                "success": True,
-                "spreadsheet_url": spreadsheet_url
-            }
-        return sheets_response
-    except Exception as e:
-        return {"success": False, "error": str(e)}
 
 def parse_time_expression(time_str):
     """Parse natural language time expression into hours"""
@@ -175,24 +224,17 @@ def search_jobs(job_title, location, results_wanted=100, time_range=None):
             json.dump(metadata, f, indent=2)
 
         results = filtered_jobs.to_dict('records')
-        
-        sheets_result = export_to_sheets(results)
-        if sheets_result.get("success"):
-            sheets_status = f"Successfully exported to Google Sheets: {sheets_result['spreadsheet_url']}"
-        else:
-            sheets_status = "Failed to export to Google Sheets"
+        html_view = generate_jobs_html(results)
         
         print(f"\nFound {len(filtered_jobs)} jobs")
         print(f"Results saved to: {csv_path}")
-        print(sheets_status)
         
-        sheets_url = sheets_result.get("spreadsheet_url") if sheets_result.get("success") else "export failed"
         time_range_str = time_range or "72 hours"
         result = {
             "success": True,
-            "message": f"Found {len(filtered_jobs)} jobs for '{job_title}' in {location} from the past {time_range_str}.\nResults saved to: {csv_path}\nGoogle Sheets: {sheets_url}",
+            "message": f"Found {len(filtered_jobs)} jobs for '{job_title}' in {location} from the past {time_range_str}.\nResults saved to: {csv_path}",
             "csv_path": csv_path,
-            "sheets_url": sheets_url
+            "html": html_view
         }
             
         return result
