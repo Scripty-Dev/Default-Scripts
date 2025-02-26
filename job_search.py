@@ -248,7 +248,7 @@ def search_jobs(job_title, location, results_wanted=100, time_range=None):
 # API definition
 object = {
     "name": "job_search",
-    "description": "Search for jobs across multiple platforms and save results to CSV and Google Sheets",
+    "description": "Search for jobs across multiple platforms and save results to CSV.",
     "parameters": {
         "type": "object",
         "properties": {

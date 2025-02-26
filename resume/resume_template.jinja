@@ -137,13 +137,12 @@
             if (body) body.style.paddingTop = '0';
             
             const htmlContent = clone.outerHTML;
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = '{{ name }}_resume.html';
-            a.click();
-            window.URL.revokeObjectURL(url);
+            
+            window.parent.postMessage({
+                type: 'save_html',
+                filename: '{{ name }} Resume.html',
+                content: htmlContent
+            }, '*');
         }
     </script>
     <header>

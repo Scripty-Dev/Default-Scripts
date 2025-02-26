@@ -1,3 +1,5 @@
+# CSS files borrowed from https://github.com/feder-cr/Jobs_Applier_AI_Agent_AIHawk/tree/main/src/libs/resume_and_cover_builder/resume_style
+
 from ..typings.scripty import script_dir
 from bs4 import BeautifulSoup
 from jinja2 import Template
@@ -21,7 +23,6 @@ async def func(args):
 class ResumeBuilder:
     def __init__(self, script_dir):
         self.script_dir = script_dir
-        self.data_file = os.path.join(script_dir, 'resume_data.json')
         self.styles_dir = os.path.join(script_dir, 'styles')
         self.style_files = [f for f in os.listdir(self.styles_dir) if f.startswith('style_') and f.endswith('.css')]
         self.current_style = self.style_files[0].replace('style_', '').replace('.css', '')
@@ -32,16 +33,13 @@ class ResumeBuilder:
             self.template = template_file.read()
 
     def update_resume_data(self, new_data):
-        current_data = self._load_current_data()
+        current_data = {}
         current_data.update(new_data)
-        self._save_current_data(current_data)
         
         missing_fields = self._get_missing_fields(current_data)
         
-        if not missing_fields["required"]:
+        if len(missing_fields["required"]) == 0:
             html = self.generate_resume(current_data)
-            if os.path.exists(self.data_file):
-                os.remove(self.data_file)
             return {
                 "message": "All required data collected",
                 "missing_optional": missing_fields["optional"],
@@ -53,16 +51,6 @@ class ResumeBuilder:
             "message": "Additional fields required",
             "missing_fields": missing_fields
         }
-
-    def _load_current_data(self):
-        if os.path.exists(self.data_file):
-            with open(self.data_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {}
-
-    def _save_current_data(self, data):
-        with open(self.data_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False)
 
     def _get_missing_fields(self, current_data):
         required_fields = ["name", "email", "phone", "location", "linkedin", 
@@ -96,9 +84,8 @@ class ResumeBuilder:
         if 'job_link' not in args:
             return {"error": "No job link provided"}
 
-        current_data = self._load_current_data()
+        current_data = {}
         current_data.update({k: v for k, v in args.items() if k != 'job_link'})
-        self._save_current_data(current_data)
 
         try:
             
@@ -165,7 +152,6 @@ Optimize this resume to better match the job requirements."""
             if response.get("tool_calls"):
                 optimized_data = json.loads(response["tool_calls"][0]["function"]["arguments"])
                 current_data.update(optimized_data)
-                self._save_current_data(current_data)
             
             html = self.generate_resume(current_data)
             return {
@@ -181,7 +167,8 @@ object = {
     "name": "generate_resume",
     "description": """Generate an HTML resume from provided data.
 You don't need to include everything at once, unless an existing resume is provided.
-Do not put any information that is not provided by the user in the resume.""",
+Don't put any information that isn't provided by the user in the resume.
+The arguments aren't required, so don't call the tool with N/A or Not provided or anything similar.""",
     "parameters": {
         "type": "object",
         "properties": {
@@ -190,8 +177,8 @@ Do not put any information that is not provided by the user in the resume.""",
             "phone": {"type": "string", "description": "Phone number"},
             "location": {"type": "string", "description": "Location"},
             "linkedin": {"type": "string", "description": "LinkedIn profile URL"},
-            "summary": {"type": "string", "description": "Professional summary", "optional": True},
-            "website": {"type": "string", "description": "Personal website URL", "optional": True},
+            "summary": {"type": "string", "description": "Professional summary"},
+            "website": {"type": "string", "description": "Personal website URL"},
             "experience": {
                 "type": "array",
                 "items": {
@@ -223,8 +210,7 @@ Do not put any information that is not provided by the user in the resume.""",
             },
             "job_link": {
                 "type": "string",
-                "description": "Optional job posting URL to optimize resume for",
-                "optional": True
+                "description": "Optional job posting URL to optimize resume for"
             }
         }
     }
