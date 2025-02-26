@@ -10,7 +10,6 @@ import os
 async def func(args):
     try:
         builder = ResumeBuilder(script_dir)
-        print('fein')
         if 'job_link' in args:
             job_link = args.pop('job_link')
             builder.update_resume_data(args)
