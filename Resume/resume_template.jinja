@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ name }} - Resume</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f0f0;
+            position: relative;
+            top: 40px;
+        }
+        
+        .style-controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .style-controls #styleName {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            text-transform: capitalize;
+        }
+        
+        .style-controls button {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #4a4a4a;
+            color: white;
+            border: none;
+            padding: 20px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .style-controls i {
+            color: white;
+            margin: 0;
+        }
+        
+        .style-controls button:hover {
+            background: #666;
+            transform: translateY(-50%) scale(1.05);
+        }
+        
+        .style-controls button:first-of-type {
+            left: 10px;
+        }
+        
+        .style-controls button:nth-of-type(2) {
+            right: 10px;
+        }
+        
+        .save-button {
+            position: fixed;
+            top: 0;
+            right: 10px;
+            background: #4a4a4a;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            z-index: 1001;
+            height: 28px;
+            margin: 5px 0;
+        }
+        
+        .save-button:hover {
+            background: #666;
+            transform: scale(1.05);
+        }
+        
+        .save-button i {
+            margin-right: 5px;
+            color: white;
+            font-size: 13px;
+        }
+
+        @media print {
+            .style-controls, .save-button {
+                display: none;
+            }
+            body {
+                padding-top: 0;
+            }
+        }
+    </style>
+    <style id="resumeStyle">
+        {{ css }}
+    </style>
+</head>
+<body>
+    <div class="style-controls">
+        <button onclick="cycleStyle(-1)"><i class="fas fa-chevron-left"></i></button>
+        <span id="styleName">{{ current_style }}</span>
+        <button onclick="cycleStyle(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <button class="save-button" onclick="saveResume()">
+        <i class="fas fa-download"></i> Save HTML
+    </button>
+    <script>
+        const styles = {{ available_styles|tojson }};
+        const styleContents = {{ style_contents|tojson }};
+        let currentIndex = styles.indexOf('{{ current_style }}');
+        
+        const cycleStyle = (direction) => {
+            currentIndex = (currentIndex + direction + styles.length) % styles.length;
+            document.getElementById('styleName').textContent = styles[currentIndex];
+            document.getElementById('resumeStyle').textContent = styleContents[currentIndex];
+        }
+        
+        const saveResume = () => {
+            const clone = document.documentElement.cloneNode(true);
+            
+            const controls = clone.querySelector('.style-controls');
+            const saveButton = clone.querySelector('.save-button');
+            if (controls) controls.remove();
+            if (saveButton) saveButton.remove();
+            
+            const body = clone.querySelector('body');
+            if (body) body.style.paddingTop = '0';
+            
+            const htmlContent = clone.outerHTML;
+            
+            window.parent.postMessage({
+                type: 'save_html',
+                filename: '{{ name }} Resume.html',
+                content: htmlContent
+            }, '*');
+        }
+    </script>
+    <header>
+        <h1>{{ name }}</h1>
+        <div class="contact-info">
+            <p><i class="fas fa-envelope"></i> {{ email }}</p>
+            <p><i class="fas fa-phone"></i> {{ phone }}</p>
+            <p><i class="fas fa-map-marker-alt"></i> {{ location }}</p>
+            <p><i class="fab fa-linkedin"></i> <a href="{{ linkedin }}">LinkedIn</a></p>
+            {% if website %}<p><i class="fas fa-globe"></i> <a href="{{ website }}">Website</a></p>{% endif %}
+        </div>
+    </header>
+
+    {% if summary %}
+    <section>
+        <h2>Professional Summary</h2>
+        <div class="entry">
+            <p>{{ summary }}</p>
+        </div>
+    </section>
+    {% endif %}
+
+    <section>
+        <h2>Experience</h2>
+        {% for job in experience %}
+        <div class="entry">
+            <div class="entry-header">
+                <span>{{ job.title }}</span>
+                <span class="entry-location">{{ job.company }}</span>
+            </div>
+            <div class="entry-details">
+                <span>{{ job.location }}</span>
+                <span>{{ job.dates }}</span>
+            </div>
+            <ul class="compact-list">
+                {% for achievement in job.achievements %}
+                <li>{{ achievement }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </section>
+
+    <section>
+        <h2>Education</h2>
+        {% for edu in education %}
+        <div class="entry">
+            <div class="entry-header">
+                <span>{{ edu.degree }}</span>
+                <span class="entry-location">{{ edu.school }}</span>
+            </div>
+            <div class="entry-details">
+                <span>{{ edu.location }}</span>
+                <span>{{ edu.dates }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <section>
+        <h2>Skills</h2>
+        <div class="entry">
+            <div class="two-column">
+                <ul>
+                    {% for skill in skills_first_half %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+                <ul>
+                    {% for skill in skills_second_half %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+</body>
+</html> 
