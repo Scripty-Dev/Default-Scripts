@@ -34,7 +34,7 @@ async def function():
         return json.dumps({"error": str(e)})
 
 object = {
-    "name": "clearRecycleBin",
+    "name": "clear_recycle_bin",
     "description": "Clears the Windows Recycle Bin without confirmation prompts. Creates a detailed log file in the same directory. Requires administrator privileges for best results.",
     "parameters": {
         "type": "object",

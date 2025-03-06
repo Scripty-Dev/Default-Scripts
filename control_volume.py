@@ -17,12 +17,10 @@ async def function(args):
         VOLUME_INTERFACE = cast(interface, POINTER(IAudioEndpointVolume))
     
     try:
-        # Handle app-specific volume control if app parameter is provided
         if 'app' in args:
             app_name = args['app'].lower()
             
             if PLATFORM == "windows":
-                # Windows approach - using pycaw to control app-specific volume
                 sessions = AudioUtilities.GetAllSessions()
                 app_found = False
                 
@@ -47,7 +45,6 @@ async def function(args):
                     return json.dumps({"error": f"Application '{args['app']}' not found or not playing audio"})
                     
             elif PLATFORM == "darwin":
-                # macOS approach - using AppleScript
                 if 'set' in args:
                     target = max(0, min(100, int(args['set'])))
                     script = f'''
@@ -94,21 +91,16 @@ async def function(args):
                         return json.dumps({"error": f"Failed to adjust volume for {args['app']}"})
                         
             elif PLATFORM == "linux":
-                # Linux approach - using pactl (PulseAudio) or wpctl (PipeWire)
-                # First, check if system uses PulseAudio or PipeWire
                 try:
-                    # Check if pactl is available (PulseAudio)
                     subprocess.run(["pactl", "--version"], capture_output=True, check=True)
                     use_pulseaudio = True
                 except (subprocess.CalledProcessError, FileNotFoundError):
-                    # Check if wpctl is available (PipeWire)
                     try:
                         subprocess.run(["wpctl", "--version"], capture_output=True, check=True)
                         use_pulseaudio = False
                     except (subprocess.CalledProcessError, FileNotFoundError):
                         return json.dumps({"error": "Neither PulseAudio nor PipeWire available on this Linux system"})
-                
-                # Get the sink-input ID for the app
+
                 app_id = None
                 if use_pulseaudio:
                     result = subprocess.run(["pactl", "list", "sink-inputs"], capture_output=True, text=True)
@@ -123,7 +115,7 @@ async def function(args):
                         elif "application.process.binary" in line and args['app'].lower() in line.lower():
                             app_id = current_id
                             break
-                else:  # PipeWire with wpctl
+                else:
                     result = subprocess.run(["wpctl", "status"], capture_output=True, text=True)
                     lines = result.stdout.split('\n')
                     for line in lines:
@@ -140,7 +132,7 @@ async def function(args):
                     target = max(0, min(100, int(args['set'])))
                     if use_pulseaudio:
                         subprocess.run(["pactl", "set-sink-input-volume", app_id, f"{target}%"])
-                    else:  # PipeWire
+                    else:
                         volume_float = target / 100.0
                         subprocess.run(["wpctl", "set-volume", app_id, f"{volume_float:.2f}"])
                     return json.dumps({"message": f"{args['app']} volume set to {target}%"})
@@ -152,14 +144,13 @@ async def function(args):
                             subprocess.run(["pactl", "set-sink-input-volume", app_id, f"+{change}%"])
                         else:
                             subprocess.run(["pactl", "set-sink-input-volume", app_id, f"{change}%"])
-                    else:  # PipeWire
+                    else:
                         change_float = change / 100.0
                         if change >= 0:
                             subprocess.run(["wpctl", "set-volume", app_id, f"{change_float:+.2f}"])
                         else:
                             subprocess.run(["wpctl", "set-volume", app_id, f"{change_float:.2f}"])
-                    
-                    # Get the new volume level for reporting
+
                     current_vol = None
                     if use_pulseaudio:
                         result = subprocess.run(["pactl", "list", "sink-inputs"], capture_output=True, text=True)
@@ -173,8 +164,7 @@ async def function(args):
                                 if match:
                                     current_vol = int(match.group(1))
                                     break
-                    else:  # PipeWire
-                        # Just report the adjustment for now as wpctl doesn't easily report current volume
+                    else:
                         pass
                     
                     if current_vol is not None:
@@ -184,7 +174,6 @@ async def function(args):
             
             return json.dumps({"error": f"Application-specific volume control not supported on {PLATFORM}"})
             
-        # Handle system-wide volume control (original functionality)
         if 'set' in args:
             target = max(0, min(100, int(args['set'])))
             
@@ -194,10 +183,8 @@ async def function(args):
                 
             elif PLATFORM == "linux":
                 try:
-                    # Try with PulseAudio first
                     subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{target}%"])
                 except FileNotFoundError:
-                    # Fall back to amixer if pactl is not available
                     subprocess.run(["amixer", "-q", "sset", "Master", f"{target}%"])
                 return json.dumps({"message": f"System volume set to {target}%"})
                 
@@ -220,13 +207,11 @@ async def function(args):
                 
             elif PLATFORM == "linux":
                 try:
-                    # Try with PulseAudio first
                     if change >= 0:
                         subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"+{change}%"])
                     else:
                         subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{change}%"])
                 except FileNotFoundError:
-                    # Fall back to amixer if pactl is not available
                     sign = "+" if change > 0 else "-"
                     subprocess.run(["amixer", "-q", "sset", "Master", f"{abs(change)}%{sign}"])
                 return json.dumps({"message": f"System volume adjusted by {change}%"})
@@ -247,7 +232,7 @@ async def function(args):
 
 object = {
     "name": "control_volume",
-    "description": f"Control system or application volume. Required format: For system volume use {{\"set\": number}} or {{\"adjust\": number}}. For app-specific volume use {{\"app\": \"appname\", \"set\": number}} or {{\"app\": \"appname\", \"adjust\": number}}.",
+    "description": "Control system or application volume. Required format: For system volume use {\"set\": number} or {\"adjust\": number}. For app-specific volume use {\"app\": \"appname\", \"set\": number} or {\"app\": \"appname\", \"adjust\": number}.",
     "parameters": {
         "type": "object",
         "properties": {
