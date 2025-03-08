@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>{{ name }} - Resume</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Add jsPDF and html2canvas libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             background-color: #f0f0f0;
@@ -65,7 +68,6 @@
         .save-button {
             position: fixed;
             top: 0;
-            right: 10px;
             background: #4a4a4a;
             color: white;
             border: none;
@@ -91,13 +93,73 @@
             color: white;
             font-size: 13px;
         }
+        
+        #htmlButton {
+            right: 10px;
+        }
+        
+        #pdfButton {
+            right: 120px;
+        }
+        
+        #printButton {
+            right: 220px;
+        }
+        
+        #resumeContent {
+            transition: all 0.3s ease;
+        }
+
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            display: none;
+        }
+        
+        .loader span {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4a4a4a;
+            margin: 0 5px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        
+        .loader span:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+        
+        .loader span:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
 
         @media print {
-            .style-controls, .save-button {
-                display: none;
+            .style-controls, .save-button, .loader {
+                display: none !important;
             }
             body {
                 padding-top: 0;
+                top: 0;
             }
         }
     </style>
@@ -106,15 +168,109 @@
     </style>
 </head>
 <body>
+    <div class="loader" id="loader">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
     <div class="style-controls">
         <button onclick="cycleStyle(-1)"><i class="fas fa-chevron-left"></i></button>
         <span id="styleName">{{ current_style }}</span>
         <button onclick="cycleStyle(1)"><i class="fas fa-chevron-right"></i></button>
     </div>
-    <button class="save-button" onclick="saveResume()">
+    
+    <button id="htmlButton" class="save-button" onclick="saveResume()">
         <i class="fas fa-download"></i> Save HTML
     </button>
+    
+    <button id="pdfButton" class="save-button" onclick="savePDF()">
+        <i class="fas fa-file-pdf"></i> Save PDF
+    </button>
+    
+    <button id="printButton" class="save-button" onclick="window.print()">
+        <i class="fas fa-print"></i> Print
+    </button>
+    
+    <div id="resumeContent">
+        <header>
+            <h1>{{ name }}</h1>
+            <div class="contact-info">
+                <p><i class="fas fa-envelope"></i> {{ email }}</p>
+                <p><i class="fas fa-phone"></i> {{ phone }}</p>
+                <p><i class="fas fa-map-marker-alt"></i> {{ location }}</p>
+                <p><i class="fab fa-linkedin"></i> <a href="{{ linkedin }}">LinkedIn</a></p>
+                {% if website %}<p><i class="fas fa-globe"></i> <a href="{{ website }}">Website</a></p>{% endif %}
+            </div>
+        </header>
+
+        {% if summary %}
+        <section>
+            <h2>Professional Summary</h2>
+            <div class="entry">
+                <p>{{ summary }}</p>
+            </div>
+        </section>
+        {% endif %}
+
+        <section>
+            <h2>Experience</h2>
+            {% for job in experience %}
+            <div class="entry">
+                <div class="entry-header">
+                    <span>{{ job.title }}</span>
+                    <span class="entry-location">{{ job.company }}</span>
+                </div>
+                <div class="entry-details">
+                    <span>{{ job.location }}</span>
+                    <span>{{ job.dates }}</span>
+                </div>
+                <ul class="compact-list">
+                    {% for achievement in job.achievements %}
+                    <li>{{ achievement }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </section>
+
+        <section>
+            <h2>Education</h2>
+            {% for edu in education %}
+            <div class="entry">
+                <div class="entry-header">
+                    <span>{{ edu.degree }}</span>
+                    <span class="entry-location">{{ edu.school }}</span>
+                </div>
+                <div class="entry-details">
+                    <span>{{ edu.location }}</span>
+                    <span>{{ edu.dates }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+
+        <section>
+            <h2>Skills</h2>
+            <div class="entry">
+                <div class="two-column">
+                    <ul>
+                        {% for skill in skills_first_half %}
+                        <li>{{ skill }}</li>
+                        {% endfor %}
+                    </ul>
+                    <ul>
+                        {% for skill in skills_second_half %}
+                        <li>{{ skill }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <script>
+        // Style cycling functionality
         const styles = {{ available_styles|tojson }};
         const styleContents = {{ style_contents|tojson }};
         let currentIndex = styles.indexOf('{{ current_style }}');
@@ -125,99 +281,93 @@
             document.getElementById('resumeStyle').textContent = styleContents[currentIndex];
         }
         
+        // HTML saving functionality
         const saveResume = () => {
             const clone = document.documentElement.cloneNode(true);
             
+            // Remove controls
             const controls = clone.querySelector('.style-controls');
-            const saveButton = clone.querySelector('.save-button');
+            const saveButtons = clone.querySelectorAll('.save-button');
+            const loader = clone.querySelector('.loader');
             if (controls) controls.remove();
-            if (saveButton) saveButton.remove();
+            if (loader) loader.remove();
+            saveButtons.forEach(button => button.remove());
             
             const body = clone.querySelector('body');
-            if (body) body.style.paddingTop = '0';
+            if (body) {
+                body.style.paddingTop = '0';
+                body.style.top = '0';
+            }
             
             const htmlContent = clone.outerHTML;
             
+            // Send message to parent for saving
             window.parent.postMessage({
                 type: 'save_html',
                 filename: '{{ name }} Resume.html',
                 content: htmlContent
             }, '*');
         }
+        
+        // PDF saving functionality
+        const savePDF = () => {
+            // Show loading indicator
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            
+            // Hide controls temporarily for clean capture
+            const controls = document.querySelector('.style-controls');
+            const saveButtons = document.querySelectorAll('.save-button');
+            
+            controls.style.display = 'none';
+            saveButtons.forEach(button => button.style.display = 'none');
+            
+            // Ensure proper positioning for capture
+            const content = document.getElementById('resumeContent');
+            const originalPosition = document.body.style.top;
+            document.body.style.top = '0';
+            content.style.padding = '20px';
+            
+            // Set a timeout to ensure styles are applied
+            setTimeout(() => {
+                // Use html2canvas to capture the resume
+                html2canvas(content, {
+                    scale: 2, // Higher scale for better quality
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true
+                }).then(canvas => {
+                    // Create PDF with proper dimensions
+                    const imgWidth = 210; // A4 width in mm
+                    const pageHeight = 297; // A4 height in mm
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    const heightLeft = imgHeight;
+                    
+                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                    
+                    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+                    pdf.save(`{{ name }} Resume.pdf`);
+                    
+                    // Restore UI elements
+                    controls.style.display = 'block';
+                    saveButtons.forEach(button => button.style.display = 'block');
+                    document.body.style.top = originalPosition;
+                    content.style.padding = '';
+                    loader.style.display = 'none';
+                }).catch(error => {
+                    console.error("Error generating PDF:", error);
+                    alert("There was an error generating the PDF. Please try again.");
+                    
+                    // Restore UI even on error
+                    controls.style.display = 'block';
+                    saveButtons.forEach(button => button.style.display = 'block');
+                    document.body.style.top = originalPosition;
+                    content.style.padding = '';
+                    loader.style.display = 'none';
+                });
+            }, 500);
+        }
     </script>
-    <header>
-        <h1>{{ name }}</h1>
-        <div class="contact-info">
-            <p><i class="fas fa-envelope"></i> {{ email }}</p>
-            <p><i class="fas fa-phone"></i> {{ phone }}</p>
-            <p><i class="fas fa-map-marker-alt"></i> {{ location }}</p>
-            <p><i class="fab fa-linkedin"></i> <a href="{{ linkedin }}">LinkedIn</a></p>
-            {% if website %}<p><i class="fas fa-globe"></i> <a href="{{ website }}">Website</a></p>{% endif %}
-        </div>
-    </header>
-
-    {% if summary %}
-    <section>
-        <h2>Professional Summary</h2>
-        <div class="entry">
-            <p>{{ summary }}</p>
-        </div>
-    </section>
-    {% endif %}
-
-    <section>
-        <h2>Experience</h2>
-        {% for job in experience %}
-        <div class="entry">
-            <div class="entry-header">
-                <span>{{ job.title }}</span>
-                <span class="entry-location">{{ job.company }}</span>
-            </div>
-            <div class="entry-details">
-                <span>{{ job.location }}</span>
-                <span>{{ job.dates }}</span>
-            </div>
-            <ul class="compact-list">
-                {% for achievement in job.achievements %}
-                <li>{{ achievement }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endfor %}
-    </section>
-
-    <section>
-        <h2>Education</h2>
-        {% for edu in education %}
-        <div class="entry">
-            <div class="entry-header">
-                <span>{{ edu.degree }}</span>
-                <span class="entry-location">{{ edu.school }}</span>
-            </div>
-            <div class="entry-details">
-                <span>{{ edu.location }}</span>
-                <span>{{ edu.dates }}</span>
-            </div>
-        </div>
-        {% endfor %}
-    </section>
-
-    <section>
-        <h2>Skills</h2>
-        <div class="entry">
-            <div class="two-column">
-                <ul>
-                    {% for skill in skills_first_half %}
-                    <li>{{ skill }}</li>
-                    {% endfor %}
-                </ul>
-                <ul>
-                    {% for skill in skills_second_half %}
-                    <li>{{ skill }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </section>
 </body>
-</html> 
+</html>
