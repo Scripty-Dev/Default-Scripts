@@ -19,7 +19,7 @@ const Home = () => {
 					</Link>
 				</div>
 
-				<div className='mt-12 grid grid-cols-1 md:grid-cols-3 gap-6'>
+				<div className='[&>*]:border-gray-500 mt-12 grid grid-cols-1 md:grid-cols-3 gap-6'>
 					<div className='p-4 border rounded-lg'>
 						<h2 className='text-xl font-semibold mb-2'>MongoDB</h2>
 						<p>NoSQL database for storing application data</p>

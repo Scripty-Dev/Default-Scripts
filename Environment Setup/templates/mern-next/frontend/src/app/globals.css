@@ -1,31 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-@layer base {
-	body {
-		@apply bg-gray-50 text-gray-900;
-	}
+:root {
+	--background: #0e0e13;
 }
 
-@layer components {
-	.btn {
-		@apply px-4 py-2 rounded-md font-medium transition-colors;
-	}
+body {
+	@apply bg-[var(--background)] min-h-screen text-gray-200 font-[var(--font-family)];
+}
 
-	.btn-primary {
-		@apply bg-primary-600 text-white hover:bg-primary-700;
-	}
+p {
+	@apply text-gray-400;
+}
 
-	.btn-secondary {
-		@apply bg-gray-200 text-gray-800 hover:bg-gray-300;
-	}
+.btn {
+	@apply px-4 py-2 rounded-md font-medium transition-colors cursor-pointer;
+}
 
-	.input {
-		@apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
-	}
+.btn-primary {
+	@apply bg-purple-600;
+}
 
-	.card {
-		@apply bg-white rounded-lg shadow-md p-6;
-	}
+.btn-secondary {
+	@apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+}
+
+.input {
+	@apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent;
+}
+
+.card {
+	@apply bg-gray-900 rounded-lg shadow-md p-6;
 }

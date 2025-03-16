@@ -1,53 +1,49 @@
-# {{folder_name}}
-
-A modern Next.js application with TypeScript and Tailwind CSS.
-
-## Features
-
-- Next.js 14 with App Router
-- TypeScript for type safety
-- Tailwind CSS for styling
-- ESLint for code quality
-- Ready-to-use components
-
-## Getting Started
-
-First, install the dependencies:
-
-```bash
-bun install
-```
-
-Then, run the development server:
-
-```bash
-bun run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+A modern Next.js application template with demo pages and a clean UI.
 
 ## Project Structure
 
 ```
-{{folder_name}}/
-├── src/                # Source code
-│   ├── app/            # Next.js App Router
-│   │   ├── layout.tsx  # Root layout
-│   │   └── page.tsx    # Home page
-│   └── components/     # Reusable components
-├── public/             # Static assets
-├── tailwind.config.js  # Tailwind configuration
-└── next.config.js      # Next.js configuration
+├── src/
+│   ├── app/              # Next.js app directory
+│   │   ├── page.tsx      # Home page
+│   │   ├── layout.tsx    # Root layout
+│   │   ├── globals.css   # Global styles
+│   │   ├── about/        # About page
+│   │   ├── projects/     # Projects page
+│   │   └── contact/      # Contact page
+│   └── components/       # Reusable components
+│       └── Navbar.tsx    # Navigation component
+├── public/               # Static assets
+├── package.json          # Project dependencies
+└── README.md             # Project documentation
 ```
+
+## Getting Started
+
+```bash
+bun dev
+```
+
+## Features
+
+- Modern UI with Tailwind CSS
+- Responsive design for all devices
+- Demo pages (Home, Projects, About, Contact)
+- TypeScript support
+- Fast development with hot reloading
+
+## Customization
+
+- Update the content in the page files to match your needs
+- Modify the styling in `globals.css` to change the look and feel
+- Add new pages by creating new directories in the `app` folder
 
 ## Learn More
 
-To learn more about the technologies used in this project:
+To learn more about Next.js, check out the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+- [Learn Next.js](https://nextjs.org/learn)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
-## Deployment
-
-This project can be easily deployed on [Vercel](https://vercel.com/), the platform from the creators of Next.js.
+This template was initialized by [Scripty](https://scripty.me).

@@ -77,7 +77,7 @@ const Dashboard = () => {
 					</div>
 				) : user ? (
 					<div>
-						<div className='mb-4 p-4 bg-gray-50 rounded-lg'>
+						<div className='mb-4 p-4 bg-[var(--background)] rounded-lg'>
 							<h2 className='text-lg font-semibold mb-2'>User Profile</h2>
 							<p>
 								<span className='font-medium'>Name:</span> {user.name}
@@ -92,8 +92,8 @@ const Dashboard = () => {
 
 						<div className='mt-6'>
 							<h2 className='text-lg font-semibold mb-4'>What's Next?</h2>
-							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-								<div className='p-4 border rounded-lg'>
+							<div className='[&>*]:border-gray-500 grid grid-cols-1 md:grid-cols-2 gap-4'>
+								<div className=' p-4 border rounded-lg'>
 									<h3 className='font-medium mb-2'>Build Your App</h3>
 									<p className='text-sm text-gray-600'>
 										Start adding more features to your MERN stack application.

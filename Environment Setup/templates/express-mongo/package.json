@@ -1,0 +1,11 @@
+{
+	"name": "express-mongo-api",
+	"version": "0.1.0",
+	"description": "Express MongoDB API initialized with Scripty",
+	"main": "dist/server.js",
+	"scripts": {
+		"dev": "bun src/index.ts",
+		"build": "tsc",
+		"start": "bun dist/index.js"
+	}
+}

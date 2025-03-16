@@ -1,11 +1,8 @@
-# {{folder_name}}
-
-A full-stack MERN (MongoDB, Express, React, Node.js) application with Next.js frontend.
+A full-stack MERN (MongoDB, Express, React, Node.js) application with Next.js frontend, initialized with [Scripty](https://scripty.me).
 
 ## Project Structure
 
 ```
-{{folder_name}}/
 ├── backend/           # Express + MongoDB backend
 │   ├── src/           # Backend source code
 │   │   ├── controllers/ # API controllers
@@ -27,16 +24,14 @@ A full-stack MERN (MongoDB, Express, React, Node.js) application with Next.js fr
 
 ```bash
 cd backend
-npm install
-npm run dev
+bun dev
 ```
 
 ### Frontend Setup
 
 ```bash
 cd frontend
-bun install
-bun run dev
+bun dev
 ```
 
 ## Features
@@ -65,3 +60,5 @@ bun run dev
 ### Frontend (.env.local)
 
 - `NEXT_PUBLIC_API_URL` - Backend API URL
+
+This template was initialized by [Scripty](https://scripty.me).

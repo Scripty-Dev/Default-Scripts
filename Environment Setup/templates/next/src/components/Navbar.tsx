@@ -1,55 +1,58 @@
 'use client'
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const NavLink = ({
-	href,
-	children,
-}: {
-	href: string
-	children: React.ReactNode
-}) => {
-	const pathname = usePathname()
-	const isActive = pathname === href
-
-	return (
-		<Link
-			href={href}
-			className={`px-3 py-2 rounded-md text-sm font-medium ${
-				isActive
-					? 'bg-primary-100 text-primary-900'
-					: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-			}`}
-		>
-			{children}
-		</Link>
-	)
-}
-
 const Navbar = () => {
+	const pathname = usePathname()
+
 	return (
-		<nav className='bg-white shadow-sm'>
+		<nav className='bg-bg shadow-md'>
 			<div className='container mx-auto px-4'>
-				<div className='flex justify-between h-16'>
+				<div className='flex justify-between items-center h-16'>
 					<div className='flex items-center'>
-						<Link href='/' className='flex-shrink-0 flex items-center'>
-							<span className='text-xl font-bold text-primary-600'>
-								Next.js App
-							</span>
+						<Link href='/' className='text-xl font-bold'>
+							Next.js Demo
 						</Link>
-						<div className='hidden sm:ml-6 sm:flex sm:space-x-2'>
-							<NavLink href='/'>Home</NavLink>
-							<NavLink href='/about'>About</NavLink>
-							<NavLink href='/contact'>Contact</NavLink>
-						</div>
 					</div>
-					<div className='flex items-center'>
-						<button className='btn-secondary'>Sign In</button>
+
+					<div className='flex space-x-4'>
+						<NavLink href='/' current={pathname === '/'}>
+							Home
+						</NavLink>
+						<NavLink href='/projects' current={pathname === '/projects'}>
+							Projects
+						</NavLink>
+						<NavLink href='/about' current={pathname === '/about'}>
+							About
+						</NavLink>
+						<NavLink href='/contact' current={pathname === '/contact'}>
+							Contact
+						</NavLink>
 					</div>
 				</div>
 			</div>
 		</nav>
+	)
+}
+
+const NavLink = ({
+	href,
+	current,
+	children,
+}: {
+	href: string
+	current: boolean
+	children: React.ReactNode
+}) => {
+	return (
+		<Link
+			href={href}
+			className={`px-3 py-2 rounded-md text-sm font-medium duration-300 ${
+				current ? '' : 'text-gray-400 hover:text-gray-100'
+			}`}
+		>
+			{children}
+		</Link>
 	)
 }
 

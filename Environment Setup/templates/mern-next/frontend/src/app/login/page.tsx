@@ -56,7 +56,7 @@ const Login = () => {
 
 				<form onSubmit={handleSubmit}>
 					<div className='mb-4'>
-						<label htmlFor='email' className='block text-gray-700 mb-2'>
+						<label htmlFor='email' className='block mb-2'>
 							Email
 						</label>
 						<input
@@ -71,7 +71,7 @@ const Login = () => {
 					</div>
 
 					<div className='mb-6'>
-						<label htmlFor='password' className='block text-gray-700 mb-2'>
+						<label htmlFor='password' className='block mb-2'>
 							Password
 						</label>
 						<input
@@ -97,7 +97,7 @@ const Login = () => {
 				<div className='mt-4 text-center'>
 					<p>
 						Don't have an account?{' '}
-						<Link href='/register' className='text-primary-600 hover:underline'>
+						<Link href='/register' className='text-gray-200 hover:underline'>
 							Register
 						</Link>
 					</p>

@@ -6,11 +6,11 @@ const Navbar = () => {
 	const pathname = usePathname()
 
 	return (
-		<nav className='bg-white shadow-md'>
+		<nav className='bg-bg shadow-md'>
 			<div className='container mx-auto px-4'>
 				<div className='flex justify-between items-center h-16'>
 					<div className='flex items-center'>
-						<Link href='/' className='text-xl font-bold text-primary-600'>
+						<Link href='/' className='text-xl font-bold'>
 							MERN Next.js
 						</Link>
 					</div>
@@ -47,10 +47,8 @@ const NavLink = ({
 	return (
 		<Link
 			href={href}
-			className={`px-3 py-2 rounded-md text-sm font-medium ${
-				current
-					? 'bg-primary-100 text-primary-700'
-					: 'text-gray-700 hover:bg-gray-100'
+			className={`px-3 py-2 rounded-md text-sm font-medium duration-300 ${
+				current ? '' : 'text-gray-400 hover:text-gray-100'
 			}`}
 		>
 			{children}

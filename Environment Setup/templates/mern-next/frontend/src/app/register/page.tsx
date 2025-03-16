@@ -70,7 +70,7 @@ const Register = () => {
 
 				<form onSubmit={handleSubmit}>
 					<div className='mb-4'>
-						<label htmlFor='name' className='block text-gray-700 mb-2'>
+						<label htmlFor='name' className='block mb-2'>
 							Name
 						</label>
 						<input
@@ -85,7 +85,7 @@ const Register = () => {
 					</div>
 
 					<div className='mb-4'>
-						<label htmlFor='email' className='block text-gray-700 mb-2'>
+						<label htmlFor='email' className='block mb-2'>
 							Email
 						</label>
 						<input
@@ -100,7 +100,7 @@ const Register = () => {
 					</div>
 
 					<div className='mb-4'>
-						<label htmlFor='password' className='block text-gray-700 mb-2'>
+						<label htmlFor='password' className='block mb-2'>
 							Password
 						</label>
 						<input
@@ -116,10 +116,7 @@ const Register = () => {
 					</div>
 
 					<div className='mb-6'>
-						<label
-							htmlFor='confirmPassword'
-							className='block text-gray-700 mb-2'
-						>
+						<label htmlFor='confirmPassword' className='block mb-2'>
 							Confirm Password
 						</label>
 						<input
@@ -146,7 +143,7 @@ const Register = () => {
 				<div className='mt-4 text-center'>
 					<p>
 						Already have an account?{' '}
-						<Link href='/login' className='text-primary-600 hover:underline'>
+						<Link href='/login' className='text-gray-200 hover:underline'>
 							Login
 						</Link>
 					</p>
