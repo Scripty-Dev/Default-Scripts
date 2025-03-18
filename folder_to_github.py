@@ -1,45 +1,27 @@
 import os
 import subprocess
 import json
-import sys
+
+public_description = "Create a GitHub repository from a local folder."
 
 def upload_folder_to_github(folder_path, repo_name, github_username, github_token, private=True):
-    """
-    Creates a GitHub repository and uploads the contents of a folder to it.
-    
-    Args:
-        folder_path: Path to the local folder
-        repo_name: Name for the new GitHub repository
-        github_username: Your GitHub username
-        github_token: Your GitHub personal access token
-        private: Whether the repository should be private (default: True)
-    """
-    # Save the current directory
     original_dir = os.getcwd()
     
     try:
-        # Change to the folder to upload
         os.chdir(folder_path)
-        
-        # Initialize git repository
         subprocess.run(["git", "init"], check=True)
-        
-        # Check if remote exists and remove it
+
         try:
             subprocess.run(["git", "remote", "remove", "origin"], stderr=subprocess.PIPE)
         except:
-            pass  # It's okay if this fails
-        
-        # Add all files
+            pass 
+
         subprocess.run(["git", "add", "."], check=True)
-        
-        # Commit the files
         try:
             subprocess.run(["git", "commit", "-m", "Initial commit"], check=True)
         except:
             subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
         
-        # Create repository using GitHub API
         create_repo_data = f'{{"name":"{repo_name}","private":{str(private).lower()}}}'
         
         create_repo_cmd = [
@@ -57,18 +39,15 @@ def upload_folder_to_github(folder_path, repo_name, github_username, github_toke
         
         if "already exists" in result.stdout or "already exists" in result.stderr:
             print(f"Repository {repo_name} already exists, continuing with push.")
-        
-        # Add the remote
+
         remote_url = f"https://{github_username}:{github_token}@github.com/{github_username}/{repo_name}.git"
         subprocess.run(["git", "remote", "add", "origin", remote_url], check=True)
-        
-        # Push to GitHub
+
         push_result = subprocess.run(["git", "push", "-u", "origin", "master"], capture_output=True, text=True)
         
         if push_result.returncode == 0:
             return {"message": f"Successfully uploaded folder to https://github.com/{github_username}/{repo_name}"}
         else:
-            # Try pushing to main branch instead
             push_main_result = subprocess.run(["git", "push", "-u", "origin", "master:main"], capture_output=True, text=True)
             if push_main_result.returncode == 0:
                 return {"message": f"Successfully uploaded folder to https://github.com/{github_username}/{repo_name} (main branch)"}
@@ -80,7 +59,6 @@ def upload_folder_to_github(folder_path, repo_name, github_username, github_toke
     except Exception as e:
         return {"error": f"Error during GitHub upload: {str(e)}"}
     finally:
-        # Change back to the original directory
         os.chdir(original_dir)
 
 async def function(args):
@@ -105,9 +83,6 @@ async def function(args):
         
     except Exception as e:
         return json.dumps({"error": str(e)})
-
-# Define object structure for AI assistant compatibility
-public_description = "Create a GitHub repository from a local folder."
 
 object = {
     "name": "github_upload",
@@ -146,22 +121,3 @@ Note: You need a GitHub personal access token with 'repo' scope to use this func
         "required": ["folder_path", "repo_name", "github_username", "github_token"]
     }
 }
-
-# If running directly (not imported)
-if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--schema":
-        print(json.dumps(object))
-        sys.exit(0)
-        
-    if len(sys.argv) >= 5:
-        folder_path = os.path.expanduser(sys.argv[1])
-        repo_name = sys.argv[2]
-        github_username = sys.argv[3]
-        github_token = sys.argv[4]
-        is_private = True if len(sys.argv) <= 5 or sys.argv[5].lower() == "true" else False
-        
-        result = upload_folder_to_github(folder_path, repo_name, github_username, github_token, is_private)
-        print(json.dumps(result, indent=2))
-    else:
-        print("Usage: python folder_to_github.py <folder_path> <repo_name> <github_username> <github_token> [private]")
-        print("Or: python folder_to_github.py --schema (to print the JSON schema)")
