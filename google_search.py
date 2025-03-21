@@ -3,6 +3,8 @@ import json
 import sys
 import asyncio
 
+public_description = "Execute Google searches with structured results including knowledge graphs, answer boxes, and organic listings."
+
 async def search_with_serper(query):
     """
     Uses the Serper API through a server route to get Google search results in a clean JSON format.
