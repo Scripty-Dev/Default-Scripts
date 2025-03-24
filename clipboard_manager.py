@@ -2,9 +2,11 @@ import json
 import os
 from datetime import datetime
 import platform
-import win32clipboard as clipboard
-import win32con
 import subprocess
+
+if platform.system() == "Windows":
+    import win32clipboard as clipboard
+    import win32con
 
 documents_dir = os.path.join(os.path.expanduser("~"), "Documents")
 HISTORY_FILE = os.path.join(documents_dir, "clipboard_history.json")
