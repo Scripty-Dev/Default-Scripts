@@ -134,7 +134,7 @@ async def function(args):
         return json.dumps({"error": str(e)})
 
 object = {
-    "name": "generate_resume",
+    "name": "resume_optimizer",
     "description": """Generate an HTML resume from provided data.
 NEVER, EVER put any information that isn't provided by the user in the resume.
 This includes but is not limited to:
