@@ -151,7 +151,7 @@
             <p><i class="fas fa-envelope"></i> {{ email }}</p>
             <p><i class="fas fa-phone"></i> {{ phone }}</p>
             <p><i class="fas fa-map-marker-alt"></i> {{ location }}</p>
-            <p><i class="fab fa-linkedin"></i> <a href="{{ linkedin }}">LinkedIn</a></p>
+            {% if linkedin %}<p><i class="fab fa-linkedin"></i> <a href="{{ linkedin }}">LinkedIn</a></p>{% endif %}
             {% if website %}<p><i class="fas fa-globe"></i> <a href="{{ website }}">Website</a></p>{% endif %}
         </div>
     </header>
