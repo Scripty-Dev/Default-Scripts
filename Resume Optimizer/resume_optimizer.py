@@ -221,6 +221,18 @@ async def function(args):
                                 }
                             },
                             "description": "Projects"
+                        },
+                        "certifications": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string", "description": "Certification name"},
+                                    "issuer": {"type": "string", "description": "Certification issuer"},
+                                    "date": {"type": "string", "description": "Date obtained"}
+                                }
+                            },
+                            "description": "Professional certifications and credentials"
                         }
                     },
                     "required": ["name", "email", "phone", "location", "skills", "experience", "education"]
@@ -319,6 +331,31 @@ async def function(args):
                     previous_sections += f"\n\n{proj_summary}"
                 
                 args['projects'] = optimized_projects
+            
+            # Add optimization for certifications if present
+            if 'certifications' in args and args['certifications']:
+                optimized_certifications = []
+                for idx, cert in enumerate(args['certifications']):
+                    cert_title = f"{cert.get('name', '')} - {cert.get('issuer', '')}"
+                    
+                    certification_prompt = f"""Optimize the following certification entry. 
+                    Focus on making it relevant to the job description while maintaining accuracy.
+                    Keep the certification details factual but highlight aspects most valuable for the role."""
+                    
+                    original_cert = json.dumps(cert)
+                    optimized_cert_response = generate_resume_section(f"{certification_prompt}\n\nOriginal certification:\n{original_cert}")
+                    
+                    try:
+                        optimized_cert = json.loads(optimized_cert_response)
+                        optimized_certifications.append(optimized_cert)
+                    except:
+                        # If parsing fails, keep original certification
+                        optimized_certifications.append(cert)
+                    
+                    cert_summary = f"Certification {idx+1}: {cert_title}"
+                    previous_sections += f"\n\n{cert_summary}"
+                
+                args['certifications'] = optimized_certifications
         
         resume_html = generate_html_resume(args)
         
