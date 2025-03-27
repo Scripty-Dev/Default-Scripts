@@ -5,12 +5,23 @@ import shutil
 import platform
 import tkinter as tk
 from tkinter import filedialog
+import glob
 
 public_description = "Convert files between various formats (audio, video, images) using local tools."
 PLATFORM = platform.system().lower()
 
 def get_file_extension(file_path):
     return os.path.splitext(file_path)[1][1:].lower()
+
+def get_latest_file(directory):
+    """Get the most recently modified file in a directory."""
+    try:
+        files = [(f, os.path.getmtime(f)) for f in glob.glob(os.path.join(directory, '*')) if os.path.isfile(f)]
+        if not files:
+            return None
+        return max(files, key=lambda x: x[1])[0]
+    except Exception:
+        return None
 
 def ensure_tools_installed():
     required_tools = {
@@ -144,13 +155,37 @@ async def function(args):
             except json.JSONDecodeError:
                 args = {"input_file": args}
         
-        input_path = os.path.expanduser(args.get("input_file", ""))
-        output_format = args.get("output_format", "").lower()
+        input_path = args.get("input_file", "")
+        if input_path.startswith('~'):
+            input_path = os.path.join(os.path.expanduser('~'), 
+                input_path[2:] if input_path.startswith('~/') or input_path.startswith('~\\') 
+                else input_path[1:])
+        input_path = os.path.normpath(input_path)
+        
         output_file = args.get("output_file", "")
+        if output_file:
+            if output_file.startswith('~'):
+                output_file = os.path.join(os.path.expanduser('~'),
+                    output_file[2:] if output_file.startswith('~/') or output_file.startswith('~\\')
+                    else output_file[1:])
+            output_file = os.path.normpath(output_file)
+        
+        output_format = args.get("output_format", "").lower()
         
         input_path = input_path.replace('\\', '/')
         if output_file:
             output_file = output_file.replace('\\', '/')
+        
+        if args.get("use_latest", False):
+            if not os.path.isdir(input_path):
+                return json.dumps({"error": "Input path must be a directory when using latest file mode"})
+            
+            latest = get_latest_file(input_path)
+            if not latest:
+                return json.dumps({"error": "No files found in directory"})
+            
+            input_path = latest
+            print(f"Using latest file: {input_path}")
         
         if not input_path or not os.path.exists(input_path):
             print(f"Path '{input_path}' not found. Opening file explorer...")
@@ -219,13 +254,29 @@ async def function(args):
 
 object = {
     "name": "file_converter",
-    "description": "Convert files between various formats (audio, video, images) using local tools.",
+    "description": """Convert files between various formats (audio, video, images) using local tools.
+    
+Examples:
+"convert my latest download to mp3"
+→ {"input_file": "~/Downloads", "output_format": "mp3", "use_latest": true}
+
+"convert all videos in Downloads to mp4"
+→ {"input_file": "~/Downloads", "output_format": "mp4", "folder_mode": true}
+
+"convert presentation.pptx to pdf"
+→ {"input_file": "~/Documents/presentation.pptx", "output_format": "pdf"}
+
+"convert my vacation photos to jpg"
+→ {"input_file": "~/Pictures/Vacation/*.png", "output_format": "jpg"}
+
+"convert podcast.mp3 to wav and save as audio.wav"
+→ {"input_file": "~/Music/podcast.mp3", "output_format": "wav", "output_file": "~/Music/audio.wav""""",
     "parameters": {
         "type": "object",
         "properties": {
             "input_file": {
                 "type": "string",
-                "description": "The path to the input file or folder to be converted. If the parent folder of the input file/folder is not specified, assume it's in home directory."
+                "description": "The path to the input file or folder to be converted. Supports ~ for home directory and wildcards for pattern matching."
             },
             "output_format": {
                 "type": "string",
@@ -237,7 +288,11 @@ object = {
             },
             "folder_mode": {
                 "type": "boolean",
-                "description": "Set to true to select a folder instead of a file when using the file explorer"
+                "description": "Set to true to convert all compatible files in a folder"
+            },
+            "use_latest": {
+                "type": "boolean",
+                "description": "Set to true to convert the most recently modified file in the input directory"
             }
         },
         "required": ["input_file", "output_format"]
