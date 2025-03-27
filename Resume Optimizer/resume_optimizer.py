@@ -151,7 +151,11 @@ async def function(args):
     try:
         # Add preprocessing for manually input text
         if 'resume_text' in args and args['resume_text']:
-            original_resume = fix_encoding(args.pop('resume_text'))
+            # Properly escape newlines and other special characters
+            resume_text = args.pop('resume_text')
+            resume_text = resume_text.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+            resume_text = json.dumps(resume_text)[1:-1]  # Remove the outer quotes
+            original_resume = fix_encoding(resume_text)
         else:
             resume_path = open_file_dialog()
             
@@ -163,7 +167,11 @@ async def function(args):
             original_resume = parse_pdf_resume(resume_path)
 
         if 'job_description' in args:
-            job_description = fix_encoding(args.pop('job_description'))
+            # Properly escape job description text as well
+            job_desc = args.pop('job_description')
+            job_desc = job_desc.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+            job_desc = json.dumps(job_desc)[1:-1]  # Remove the outer quotes
+            job_description = fix_encoding(job_desc)
 
         resume_parser_tool = {
             "type": "function",
