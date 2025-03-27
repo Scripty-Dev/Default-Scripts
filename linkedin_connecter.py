@@ -267,7 +267,7 @@ def connect_with_people(title, location, max_connections=20, custom_prompt=""):
                                 custom_message = call_ai(prompt)["content"]
                                 note_area = driver.find_element(By.ID, "custom-message")
                                 note_area.send_keys(custom_message)
-                                click(driver, "//button[@aria-label='Send']")
+                                click(driver, "//button[@aria-label='Send invitation']")
                                 connection_sent = True
                         
                         if connection_sent:
