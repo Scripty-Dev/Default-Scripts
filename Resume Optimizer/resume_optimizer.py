@@ -149,8 +149,9 @@ async def function(args):
     global job_description, original_resume, previous_sections
     
     try:
+        # Add preprocessing for manually input text
         if 'resume_text' in args and args['resume_text']:
-            original_resume = args.pop('resume_text')
+            original_resume = fix_encoding(args.pop('resume_text'))
         else:
             resume_path = open_file_dialog()
             
@@ -162,7 +163,7 @@ async def function(args):
             original_resume = parse_pdf_resume(resume_path)
 
         if 'job_description' in args:
-            job_description = args.pop('job_description')
+            job_description = fix_encoding(args.pop('job_description'))
 
         resume_parser_tool = {
             "type": "function",
