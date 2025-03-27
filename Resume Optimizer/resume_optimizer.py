@@ -3,9 +3,13 @@
 import aiohttp
 import json
 import os
+import tkinter as tk
+from tkinter import filedialog
+import fitz
 from bs4 import BeautifulSoup
 from jinja2 import Template
 from ..typings.scripty import script_dir
+
 
 public_description = "Generate a resume, or optimize a resume for a job application."
 
@@ -69,8 +73,8 @@ async def get_job_description(job_link):
                 html_content = await response.text()
                 soup = BeautifulSoup(html_content, 'html.parser')
                 raw_content = soup.get_text(separator=' ', strip=True)
-                parsed_raw_content = raw_content.encode('ascii', 'replace').decode('ascii')
-                
+
+                parsed_raw_content = fix_encoding(raw_content)
                 prompt = f"Clean up the following job description: {parsed_raw_content}"
                 response = call_ai(prompt)
                 
@@ -79,18 +83,190 @@ async def get_job_description(job_link):
         print(f"Error fetching job link: {str(e)}")
         return ""
 
+def parse_pdf_resume(pdf_path):
+    try:
+        resume_text = ""
+        doc = fitz.open(pdf_path)
+        
+        for page in doc:
+            page_text = page.get_text()
+            fixed_text = fix_encoding(page_text)
+            resume_text += fixed_text
+        
+        return resume_text
+    except Exception as e:
+        print(f"Error parsing PDF: {str(e)}")
+        return ""
+
+def fix_encoding(text):
+    replacements = {
+        "â€™": "'",
+        "â€\"": "–",
+        "â€œ": """,
+        "â€": """,
+        "Ã©": "é",
+        "Ã¨": "è",
+        "Ã«": "ë",
+        "Ã¯": "ï",
+        "Ã®": "î",
+        "Ã´": "ô",
+        "Ã»": "û",
+        "Ã¹": "ù",
+        "Ã¢": "â",
+        "Ãª": "ê",
+        "Ã§": "ç"
+    }
+    
+    for bad, good in replacements.items():
+        text = text.replace(bad, good)
+
+    try:
+        return text.encode('cp1252', errors='replace').decode('utf-8', errors='replace')
+    except Exception:
+        pass
+    
+    try:
+        return text.encode('latin1', errors='replace').decode('utf-8', errors='replace')
+    except Exception:
+        pass
+    
+    return text.replace('', '')
+
+def open_file_dialog():
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes('-topmost', True)
+    
+    file_path = filedialog.askopenfilename(
+        title="Select Resume PDF File",
+        filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
+    )
+    
+    root.destroy()
+    return file_path
+
 async def function(args):
     global job_description, original_resume, previous_sections
     
     try:
-        if 'job_link' in args:
-            job_link = args.pop('job_link')
-            job_description = await get_job_description(job_link)
+        if 'resume_text' in args and args['resume_text']:
+            original_resume = args.pop('resume_text')
+        else:
+            resume_path = open_file_dialog()
             
+            if not resume_path:
+                return json.dumps({
+                    "error": "No file selected. Please try again and select a resume PDF file."
+                })
+                
+            original_resume = parse_pdf_resume(resume_path)
+
+        if 'job_description' in args:
+            job_description = args.pop('job_description')
+
+        resume_parser_tool = {
+            "type": "function",
+            "function": {
+                "name": "parse_resume",
+                "description": "Parse and structure resume content",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Full name of the candidate"},
+                        "email": {"type": "string", "description": "Email address"},
+                        "phone": {"type": "string", "description": "Phone number"},
+                        "location": {"type": "string", "description": "Location/address"},
+                        "linkedin": {"type": "string", "description": "LinkedIn profile URL"},
+                        "website": {"type": "string", "description": "Personal website URL"},
+                        "summary": {"type": "string", "description": "Professional summary"},
+                        "skills": {"type": "array", "items": {"type": "string"}, "description": "List of skills"},
+                        "achievements": {"type": "array", "items": {"type": "string"}, "description": "List of key achievements"},
+                        "experience": {
+                            "type": "array", 
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string", "description": "Job title"},
+                                    "company": {"type": "string", "description": "Company name"},
+                                    "location": {"type": "string", "description": "Job location"},
+                                    "dates": {"type": "string", "description": "Employment dates"},
+                                    "achievements": {"type": "array", "items": {"type": "string"}, "description": "Job achievements"}
+                                }
+                            },
+                            "description": "Work experience"
+                        },
+                        "education": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "degree": {"type": "string", "description": "Degree obtained"},
+                                    "school": {"type": "string", "description": "School name"},
+                                    "location": {"type": "string", "description": "School location"},
+                                    "dates": {"type": "string", "description": "Education dates"}
+                                }
+                            },
+                            "description": "Education history"
+                        },
+                        "projects": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string", "description": "Project name"},
+                                    "url": {"type": "string", "description": "Project URL"},
+                                    "dates": {"type": "string", "description": "Project dates"},
+                                    "description": {"type": "string", "description": "Project description"},
+                                    "technologies": {"type": "array", "items": {"type": "string"}, "description": "Technologies used"}
+                                }
+                            },
+                            "description": "Projects"
+                        }
+                    },
+                    "required": ["name", "email", "phone", "location", "skills", "experience", "education"]
+                }
+            }
+        }
+
+        prompt = f"Parse this resume into a structured format for optimization:\n\n{original_resume}"
+        response = call_ai(
+            prompt,
+            tools=[resume_parser_tool],
+            tool_choice="required"
+        )
+        
+        if response.get("tool_calls"):
+            args.update(json.loads(response["tool_calls"][0]["function"]["arguments"]))
+            print(args)
+
+        if job_description:
             professional_summary_prompt = "Generate a straight to the point professional summary that highlights relevant expertise and skills, clear evidence of value and impact, and a concise narrative."
             professional_summary = generate_resume_section(professional_summary_prompt)
             previous_sections = "Professional Summary:\n" + professional_summary
             args['summary'] = professional_summary
+            
+            if 'achievements' in args and args['achievements']:
+                optimized_achievements = []
+                achievements_prompt = """Optimize the following key achievements to highlight accomplishments that are most relevant to the job description. 
+                Focus on quantifiable results and impactful contributions. Make each bullet point concise and impressive.
+                You are allowed to make up minor details to better fit the job description, as long as they are believable and a possible outcome of the person's career."""
+                
+                original_achievements = "\n".join([f"- {a}" for a in args['achievements']])
+                achievements_section = generate_resume_section(f"{achievements_prompt}\n\nOriginal achievements:\n{original_achievements}")
+                
+                for line in achievements_section.strip().split('\n'):
+                    line = line.strip()
+                    if line.startswith('- '):
+                        line = line[2:]
+                    elif line.startswith('• '):
+                        line = line[2:]
+                    if line:
+                        optimized_achievements.append(line)
+                
+                args['achievements'] = optimized_achievements
+                
+                achievements_summary = "Key Achievements:\n" + "\n".join([f"- {a}" for a in optimized_achievements])
+                previous_sections += f"\n\n{achievements_summary}"
             
             if 'experience' in args and args['experience']:
                 optimized_experience = []
@@ -123,6 +299,27 @@ async def function(args):
                 
                 args['experience'] = optimized_experience
         
+            if 'projects' in args and args['projects']:
+                optimized_projects = []
+                for idx, proj in enumerate(args['projects']):
+                    proj_title = f"{proj.get('name', '')}"
+                    
+                    if 'description' in proj and proj['description']:
+                        description_prompt = f"""Optimize the following project description for {proj_title}. Focus on the technical aspects, skills, and outcomes most relevant to the job description.
+                        Highlight technologies used and quantifiable results if available. Make the description impactful and concise.
+                        You are allowed to make up minor details to better fit the job description, as long as they are believable and technically feasible."""
+                        
+                        original_description = proj['description']
+                        optimized_description = generate_resume_section(f"{description_prompt}\n\nOriginal description:\n{original_description}")
+                        proj['description'] = optimized_description
+                    
+                    optimized_projects.append(proj)
+                    
+                    proj_summary = f"Project {idx+1}: {proj_title}\n{proj.get('description', '')}"
+                    previous_sections += f"\n\n{proj_summary}"
+                
+                args['projects'] = optimized_projects
+        
         resume_html = generate_html_resume(args)
         
         return json.dumps({
@@ -135,60 +332,13 @@ async def function(args):
 
 object = {
     "name": "resume_optimizer",
-    "description": """Generate an HTML resume from provided data.
-NEVER, EVER put any information that isn't provided by the user in the resume.
-This includes but is not limited to:
-- Dates (such as for education)
-- Job titles
-- LinkedIn profile URL
-- Personal website URL
-
-Making up information WILL get the user into legal trouble, even with made up links such as LinkedIn.
-The arguments aren't required, so don't call the tool with N/A or Not provided or anything similar.""",
+    "description": "Optimize a resume for a job application.",
     "parameters": {
         "type": "object",
         "properties": {
-            "name": {"type": "string", "description": "Full name"},
-            "email": {"type": "string", "description": "Email address"},
-            "phone": {"type": "string", "description": "Phone number"},
-            "location": {"type": "string", "description": "Location"},
-            "linkedin": {"type": "string", "description": "LinkedIn profile URL"},
-            "summary": {"type": "string", "description": "Professional summary"},
-            "website": {"type": "string", "description": "Personal website URL"},
-            "experience": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "title": {"type": "string"},
-                        "company": {"type": "string"},
-                        "location": {"type": "string"},
-                        "dates": {"type": "string"},
-                        "achievements": {"type": "array", "items": {"type": "string"}}
-                    }
-                }
-            },
-            "education": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "degree": {"type": "string"},
-                        "school": {"type": "string"},
-                        "location": {"type": "string"},
-                        "dates": {"type": "string"}
-                    }
-                }
-            },
-            "skills": {
-                "type": "array",
-                "items": {"type": "string"}
-            },
-            "job_link": {
-                "type": "string",
-                "description": "Optional job posting URL to optimize resume for"
-            }
+            "job_description": {"type": "string", "description": "The job description text for which to optimize the resume."},
+            "resume_text": {"type": "string", "description": "Optional resume text if provided by the user."}
         },
-        "required": ["name", "email", "phone", "location", "experience", "education", "skills"]
+        "required": ["job_description"]
     }
 }
