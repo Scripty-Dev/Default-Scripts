@@ -189,3 +189,46 @@ section h2 {
 #skills-languages {
 	order: 5;
 }
+
+/* Certification Section Styles */
+.certifications-section {
+	margin-bottom: 1.5rem;
+}
+
+.certification-block {
+	margin-bottom: 1rem;
+	padding: 0.75rem;
+	border-left: 4px solid #ff6b6b;
+	background-color: #fff;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.certification-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+}
+
+.certification-header h3 {
+	margin: 0;
+	color: #2d3436;
+	font-size: 1.2rem;
+	font-weight: 600;
+}
+
+.certification-issuer {
+	color: #636e72;
+	font-style: italic;
+	font-weight: 500;
+}
+
+.certification-details {
+	margin-top: 0.25rem;
+	font-size: 0.95rem;
+	color: #2d3436;
+}
+
+.certification-date {
+	font-style: italic;
+	color: #636e72;
+}

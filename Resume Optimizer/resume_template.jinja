@@ -259,19 +259,24 @@
         </section>
 
         {% if certifications %}
-        <section class="certifications">
+        <div class="section certifications-section">
             <h2>Certifications</h2>
-            <ul>
+            <div class="content">
                 {% for cert in certifications %}
-                <li>
-                    <strong>{{ cert.name }}</strong> - {{ cert.issuer }}
-                    {% if cert.date %}<br>Obtained: {{ cert.date }}{% endif %}
-                    {% if cert.expiry %} (Expires: {{ cert.expiry }}){% endif %}
-                    {% if cert.id %}<br>Credential ID: {{ cert.id }}{% endif %}
-                </li>
+                <div class="certification-block">
+                    <div class="certification-header">
+                        <h3>{{ cert.name }}</h3>
+                        <span class="certification-issuer">{{ cert.issuer }}</span>
+                    </div>
+                    <div class="certification-details">
+                        {% if cert.date %}
+                        <span class="certification-date">{{ cert.date }}</span>
+                        {% endif %}
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
-        </section>
+            </div>
+        </div>
         {% endif %}
     </body>
 </html> 

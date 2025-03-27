@@ -164,3 +164,43 @@ a:hover {
 		padding: 10px 0;
 	}
 }
+
+/* Certification Section Styles */
+.certifications-section {
+	margin-bottom: 1.5rem;
+}
+
+.certification-block {
+	margin-bottom: 1rem;
+	padding: 0.5rem;
+	border-left: 3px solid #1e88e5;
+	background-color: #fff;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.certification-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+}
+
+.certification-header h3 {
+	margin: 0;
+	color: #1e88e5;
+	font-size: 1.1rem;
+}
+
+.certification-issuer {
+	color: #546e7a;
+	font-style: italic;
+}
+
+.certification-details {
+	margin-top: 0.25rem;
+	font-size: 0.9rem;
+	color: #37474f;
+}
+
+.certification-date {
+	font-style: italic;
+}
