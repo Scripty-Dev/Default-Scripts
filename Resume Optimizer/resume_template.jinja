@@ -213,7 +213,11 @@
                     <span>{{ project.dates }}</span>
                 </div>
                 {% endif %}
-                <p>{{ project.description }}</p>
+                <ul class="compact-list">
+                    {% for line in project.description.split('\n') %}
+                    <li>{{ line }}</li>
+                    {% endfor %}
+                </ul>
                 {% if project.technologies %}
                 <div class="technologies">
                     <strong>Technologies:</strong> {{ project.technologies|join(', ') }}

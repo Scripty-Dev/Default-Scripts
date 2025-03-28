@@ -20,6 +20,8 @@ previous_sections = ""
 def generate_resume_section(instructions):
     prompt = f"""You are an EXTREMELY TALENTED resume optimizer that meticulously optimizes resumes for job applications.
     You are to OPTIMIZE the original resume based on the job description.
+    Avoid the use of corporate jargon and buzzwords.
+    Avoid repetition of the same action verbs.
     You are also given previous sections of the new resume that have already been generated.
     DO NOT mention the job itself, rather EMPHASIZE the skills and expertise that are most relevant to the job description.
     You will ONLY return the optimized section as it will be copy pasted verbatim into the resume.
