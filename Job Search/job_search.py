@@ -62,8 +62,13 @@ def clean_dataframe(df):
 
 def search_jobs(job_title, location, results_wanted=100):
     try:
+        import datetime
+        
         base_dir = get_base_directory()
-        search_dir = os.path.join(base_dir, f"search_results")
+        
+        # Create timestamped folder name
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        search_dir = os.path.join(base_dir, f"search_{timestamp}")
         os.makedirs(search_dir, exist_ok=True)
 
         city = location.split(',')[0].strip()
@@ -116,7 +121,9 @@ def search_jobs(job_title, location, results_wanted=100):
         metadata = {
             'total_jobs': len(filtered_jobs),
             'search_term': search_term,
-            'location': location
+            'location': location,
+            'timestamp': timestamp,
+            'search_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         with open(os.path.join(search_dir, "metadata.json"), 'w') as f:
             json.dump(metadata, f, indent=2)
